@@ -1,6 +1,6 @@
 {
   "name": "cloudflare-access",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Multi-framework authentication for Cloudflare Access with JWT validation - supports Hono, Express, Fastify, NestJS, and Effect-TS",
   "keywords": [
     "authentication",
