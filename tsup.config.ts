@@ -8,7 +8,7 @@ export default defineConfig({
     "adapters/fastify/index": "src/adapters/fastify/index.ts",
     "adapters/nestjs/index": "src/adapters/nestjs/index.ts",
     "adapters/effect/index": "src/adapters/effect/index.ts",
-    "core/auth": "src/core/auth.ts",
+    "core/index": "src/core/index.ts",
   },
   format: ["cjs", "esm"],
   dts: true,

@@ -25,7 +25,7 @@
       "cloudflare-access/fastify": ["./src/adapters/fastify/index.ts"],
       "cloudflare-access/nestjs": ["./src/adapters/nestjs/index.ts"],
       "cloudflare-access/effect": ["./src/adapters/effect/index.ts"],
-      "cloudflare-access/core": ["./src/core/auth.ts"]
+      "cloudflare-access/core": ["./src/core/index.ts"]
     }
   },
   "include": ["src/**/*", "examples/**/*"],

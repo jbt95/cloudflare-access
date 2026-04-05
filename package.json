@@ -98,12 +98,12 @@
     },
     "./core": {
       "import": {
-        "types": "./dist/core/auth.d.mts",
-        "default": "./dist/core/auth.mjs"
+        "types": "./dist/core/index.d.mts",
+        "default": "./dist/core/index.mjs"
       },
       "require": {
-        "types": "./dist/core/auth.d.ts",
-        "default": "./dist/core/auth.js"
+        "types": "./dist/core/index.d.ts",
+        "default": "./dist/core/index.js"
       }
     },
     "./package.json": "./package.json"
