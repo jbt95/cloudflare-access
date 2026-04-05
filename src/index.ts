@@ -32,10 +32,9 @@ export {
   type CloudflareAccessUser,
   type CloudflareAccessPayload,
   type CloudflareAccessMiddlewareEnv,
-  type AuthError,
   type AuthResult,
   // Functions
   getCloudflareAccessConfigFromEnv,
   validateCloudflareAccessToken,
   __clearJwksCache,
-} from "./core/auth";
+} from "./core";

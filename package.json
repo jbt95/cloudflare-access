@@ -125,6 +125,8 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260404.1",
+    "@effect/platform": "^0.96.0",
+    "@effect/platform-node": "^0.106.0",
     "@nestjs/common": "^11.1.18",
     "@nestjs/core": "^11.1.18",
     "@types/bun": "latest",
@@ -140,6 +142,8 @@
     "typescript": "^5.7.2"
   },
   "peerDependencies": {
+    "@effect/platform": "0.77.0",
+    "@effect/platform-node": "",
     "hono": "^4.0.0"
   },
   "peerDependenciesMeta": {
@@ -159,6 +163,12 @@
       "optional": true
     },
     "hono": {
+      "optional": true
+    },
+    "@effect/platform": {
+      "optional": true
+    },
+    "@effect/platform-node": {
       "optional": true
     }
   },

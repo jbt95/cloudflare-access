@@ -166,30 +166,38 @@ export class AppModule {}
 ### Effect-TS
 
 ```typescript
-import { Effect, Option, Either } from "effect";
-import { authenticate, type CloudflareAccessContext } from "cloudflare-access/effect";
+import { Effect, Either } from "effect";
+import { HttpServerRequest } from "@effect/platform";
+import { authenticateRequest } from "cloudflare-access/effect";
 
-const context: CloudflareAccessContext = {
-  token: Option.some("jwt-token-here"),
-  requestUrl: "https://example.com/api",
+const request: HttpServerRequest.HttpServerRequest = {
+  url: "https://example.com/api/protected",
+  headers: {
+    "cf-access-jwt-assertion": "jwt-token-here",
+  },
+  method: "GET",
 };
 
 const program = Effect.gen(function* () {
-  const result = yield* authenticate(context, {
-    accessConfig: {
-      teamDomain: "https://yourteam.cloudflareaccess.com",
-      audTag: "your-audience-tag",
+  const result = yield* Effect.either(
+    authenticateRequest(request, {
+      accessConfig: {
+        teamDomain: "https://yourteam.cloudflareaccess.com",
+        audTag: "your-audience-tag",
+      },
+    }),
+  );
+
+  return Either.match(result, {
+    onLeft: (error) => {
+      console.error(`Auth failed: ${error.message}`);
+      return null;
+    },
+    onRight: (user) => {
+      console.log(`Authenticated user: ${user.email}`);
+      return user;
     },
   });
-
-  // In dev mode with skipInDev enabled, result.user might be undefined
-  if (result.user) {
-    console.log(`Authenticated user: ${result.user.email}`);
-    return result.user;
-  }
-
-  console.log("Authentication skipped (dev mode)");
-  return null;
 });
 
 Effect.runPromise(program);
@@ -331,27 +339,43 @@ import { CloudflareAccessErrorCode } from "cloudflare-access/core";
 ```typescript
 import { Effect, Either } from "effect";
 import {
-  authenticate,
+  authenticateRequest,
   AuthRequiredError,
   InvalidTokenError,
   AccessDeniedError,
 } from "cloudflare-access/effect";
+import { HttpServerRequest } from "@effect/platform";
+
+const request: HttpServerRequest.HttpServerRequest = {
+  url: "https://example.com/api/protected",
+  headers: { "cf-access-jwt-assertion": "token" },
+  method: "GET",
+};
 
 const program = Effect.gen(function* () {
-  const result = yield* authenticate(context, options).pipe(
-    Effect.catchAll((error) => {
-      if (error instanceof AuthRequiredError) {
-        console.log("Auth required:", error.message);
-        return Effect.succeed({ user: null });
-      }
-      if (error instanceof AccessDeniedError) {
-        console.log("Access denied for:", error.email);
-      }
-      return Effect.fail(error);
+  const result = yield* Effect.either(
+    authenticateRequest(request, {
+      accessConfig: {
+        teamDomain: "https://yourteam.cloudflareaccess.com",
+        audTag: "your-audience-tag",
+      },
     }),
   );
 
-  return result;
+  return Either.match(result, {
+    onLeft: (error) => {
+      if (error instanceof AuthRequiredError) {
+        console.log("Auth required:", error.message);
+        return null;
+      }
+      if (error instanceof AccessDeniedError) {
+        console.log("Access denied for:", error.email);
+        return null;
+      }
+      throw error;
+    },
+    onRight: (user) => user,
+  });
 });
 ```
 
@@ -392,28 +416,13 @@ import { createCloudflareAccessAuth } from "cloudflare-access/hono";
 import { cloudflareAccessAuth } from "cloudflare-access/express";
 import { cloudflareAccessPlugin } from "cloudflare-access/fastify";
 import { CloudflareAccessGuard } from "cloudflare-access/nestjs";
-import { authenticate } from "cloudflare-access/effect";
+import { authenticateRequest } from "cloudflare-access/effect";
 
 // Hono exports (from root)
 import {
   createCloudflareAccessAuth,
   getCloudflareAccessConfigFromBindings,
 } from "cloudflare-access";
-```
-
-### TypeScript Path Mapping
-
-If you want to use path aliases in your project:
-
-```json
-{
-  "compilerOptions": {
-    "paths": {
-      "cloudflare-access": ["./node_modules/cloudflare-access/dist/index.js"],
-      "cloudflare-access/*": ["./node_modules/cloudflare-access/dist/*/index.js"]
-    }
-  }
-}
 ```
 
 ## Examples
@@ -437,15 +446,6 @@ bun test
 # Run with coverage
 bun test --coverage
 ```
-
-Test coverage includes:
-
-- Token validation (valid, invalid, expired tokens)
-- Email allowlist filtering
-- Path exclusions
-- OPTIONS request handling
-- Dev mode skipping
-- Custom error handlers
 
 ## License
 

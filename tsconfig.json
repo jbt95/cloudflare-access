@@ -28,6 +28,6 @@
       "cloudflare-access/core": ["./src/core/auth.ts"]
     }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+  "include": ["src/**/*", "examples/**/*"],
+  "exclude": ["node_modules", "dist", "src/__tests__"]
 }
