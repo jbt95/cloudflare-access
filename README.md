@@ -1,10 +1,37 @@
-# cloudflare-access
+<div align="center">
 
-Multi-framework authentication for Cloudflare Access with JWT validation.
+# 🔐 cloudflare-access
 
-Supports: **Hono**, **Express**, **Fastify**, **NestJS**, and **Effect-TS**.
+**Zero-config authentication for Cloudflare Access across all major frameworks**
 
-## Installation
+[![npm version](https://img.shields.io/npm/v/cloudflare-access.svg?style=for-the-badge&color=3178C6)](https://www.npmjs.com/package/cloudflare-access)
+[![npm downloads](https://img.shields.io/npm/dm/cloudflare-access.svg?style=for-the-badge&color=42B883)](https://www.npmjs.com/package/cloudflare-access)
+[![license](https://img.shields.io/npm/l/cloudflare-access.svg?style=for-the-badge&color=F7DF1E)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+
+</div>
+
+Secure, JWT-validated authentication middleware for **[Hono](https://hono.dev)**, **[Express](https://expressjs.com)**, **[Fastify](https://fastify.io)**, **[NestJS](https://nestjs.com)**, and **[Effect-TS](https://effect.website)**. Built for Cloudflare Access with automatic JWKS key rotation, local development bypass, and rich error handling.
+
+---
+
+## ✨ Features
+
+| Feature                  | Description                                                    |
+| ------------------------ | -------------------------------------------------------------- |
+| 🔐 **JWT Validation**    | Full RS256 signature verification with automatic JWKS fetching |
+| 🏢 **Cloudflare Access** | Native support for Cloudflare Access tokens & team domains     |
+| 🚀 **Multi-Framework**   | Hono, Express, Fastify, NestJS, Effect-TS adapters             |
+| 🔄 **Auto Key Rotation** | Automatic JWKS key fetching with in-memory caching             |
+| 🛠️ **Dev-Friendly**      | Skip validation in local development (localhost detection)     |
+| 📧 **Email Allowlist**   | Restrict access by email patterns                              |
+| 🎯 **Rich Errors**       | Actionable error messages with `why` and `fix` hints           |
+| 📦 **Type-Safe**         | Full TypeScript support with generated types                   |
+| 🌐 **Edge-Ready**        | Works on Cloudflare Workers, Vercel Edge, Deno Deploy          |
+
+---
+
+## 📦 Installation
 
 ```bash
 # npm
@@ -13,45 +40,34 @@ npm install cloudflare-access
 # yarn
 yarn add cloudflare-access
 
-# bun
+# bun (recommended)
 bun add cloudflare-access
 ```
 
-## Framework-Specific Installation
-
-### Hono
+### Framework-Specific Setup
 
 ```bash
+# 🎯 Hono - Edge-first web framework
 bun add cloudflare-access hono
-```
 
-### Express
-
-```bash
+# 🚂 Express - Classic Node.js framework
 bun add cloudflare-access express
-```
 
-### Fastify
-
-```bash
+# ⚡ Fastify - High-performance framework
 bun add cloudflare-access fastify
-```
 
-### NestJS
-
-```bash
+# 🦁 NestJS - Enterprise framework
 bun add cloudflare-access @nestjs/common @nestjs/core
-```
 
-### Effect-TS
-
-```bash
+# 🎭 Effect-TS - Functional programming
 bun add cloudflare-access effect
 ```
 
-## Quick Start
+---
 
-### Hono
+## 🚀 Quick Start
+
+### 🎯 Hono
 
 ```typescript
 import { Hono } from "hono";
@@ -59,7 +75,7 @@ import { createCloudflareAccessAuth } from "cloudflare-access/hono";
 
 const app = new Hono();
 
-// Using static configuration (works with any deployment target)
+// Apply middleware to all routes
 app.use(
   createCloudflareAccessAuth({
     accessConfig: {
@@ -69,19 +85,13 @@ app.use(
   }),
 );
 
-// Or with Cloudflare Workers bindings
-// import { getCloudflareAccessConfigFromBindings } from "cloudflare-access/hono";
-// app.use(createCloudflareAccessAuth({
-//   accessConfig: getCloudflareAccessConfigFromBindings,
-// }));
-
-app.get("/protected", (c) => {
+app.get("/api/user", (c) => {
   const user = c.get("user");
-  return c.json({ email: user?.email });
+  return c.json({ email: user?.email, id: user?.userId });
 });
 ```
 
-### Express
+### 🚂 Express
 
 ```typescript
 import express from "express";
@@ -98,12 +108,12 @@ app.use(
   }),
 );
 
-app.get("/protected", (req, res) => {
-  res.json({ email: req.user?.email });
+app.get("/api/user", (req, res) => {
+  res.json({ email: req.user?.email, id: req.user?.userId });
 });
 ```
 
-### Fastify
+### ⚡ Fastify
 
 ```typescript
 import fastify from "fastify";
@@ -111,37 +121,37 @@ import { cloudflareAccessPlugin } from "cloudflare-access/fastify";
 
 const app = fastify();
 
-app.register(cloudflareAccessPlugin, {
+await app.register(cloudflareAccessPlugin, {
   accessConfig: {
     teamDomain: "https://yourteam.cloudflareaccess.com",
     audTag: "your-audience-tag",
   },
 });
 
-app.get("/protected", async (request, reply) => {
+app.get("/api/user", async (request) => {
   return { email: request.user?.email };
 });
 ```
 
-### NestJS
+### 🦁 NestJS
 
 ```typescript
-import { Controller, Get, Req, Module } from "@nestjs/common";
-import { CloudflareAccessGuard, Public } from "cloudflare-access/nestjs";
+import { Module, Controller, Get, Req } from "@nestjs/common";
 import { APP_GUARD } from "@nestjs/core";
+import { CloudflareAccessGuard, Public } from "cloudflare-access/nestjs";
 import type { Request } from "express";
 
 @Controller("api")
-export class ApiController {
-  @Get("protected")
-  getProtected(@Req() req: Request) {
+class ApiController {
+  @Get("profile")
+  getProfile(@Req() req: Request) {
     return { email: req.user?.email };
   }
 
-  @Public()
-  @Get("public")
-  getPublic() {
-    return { message: "This is public" };
+  @Public() // Skip auth for this route
+  @Get("health")
+  getHealth() {
+    return { status: "ok" };
   }
 }
 
@@ -163,67 +173,43 @@ export class ApiController {
 export class AppModule {}
 ```
 
-### Effect-TS
+### 🎭 Effect-TS
 
 ```typescript
-import { Effect, Either } from "effect";
-import { HttpServerRequest } from "@effect/platform";
+import { Effect, pipe } from "effect";
 import { authenticateRequest } from "cloudflare-access/effect";
+import { HttpServerRequest } from "@effect/platform";
 
-const request: HttpServerRequest.HttpServerRequest = {
-  url: "https://example.com/api/protected",
-  headers: {
-    "cf-access-jwt-assertion": "jwt-token-here",
-  },
-  method: "GET",
-};
-
-const program = Effect.gen(function* () {
-  const result = yield* Effect.either(
-    authenticateRequest(request, {
-      accessConfig: {
-        teamDomain: "https://yourteam.cloudflareaccess.com",
-        audTag: "your-audience-tag",
-      },
-    }),
-  );
-
-  return Either.match(result, {
-    onLeft: (error) => {
-      console.error(`Auth failed: ${error.message}`);
-      return null;
+const program = pipe(
+  authenticateRequest(request, {
+    accessConfig: {
+      teamDomain: "https://yourteam.cloudflareaccess.com",
+      audTag: "your-audience-tag",
     },
-    onRight: (user) => {
-      console.log(`Authenticated user: ${user.email}`);
-      return user;
-    },
-  });
-});
+  }),
+  Effect.tap((user) => Effect.log(`Authenticated: ${user.email}`)),
+  Effect.catchAll((error) => Effect.logError(`Auth failed: ${error.message}`)),
+);
 
 Effect.runPromise(program);
 ```
 
-## Configuration
+---
+
+## ⚙️ Configuration
 
 ### Environment Variables
 
-Configure your Cloudflare Access credentials via environment variables:
-
 ```bash
-# .env
+# Required
 CF_ACCESS_TEAM_DOMAIN=https://yourteam.cloudflareaccess.com
-CF_ACCESS_AUD=your-audience-tag
-ENVIRONMENT=dev
+CF_ACCESS_AUD=your-audience-tag-from-cloudflare
+
+# Optional
+ENVIRONMENT=development  # Skips JWT validation on localhost
 ```
 
-Or set them directly in your environment:
-
-```bash
-export CF_ACCESS_TEAM_DOMAIN="https://yourteam.cloudflareaccess.com"
-export CF_ACCESS_AUD="your-audience-tag"
-```
-
-For **Cloudflare Workers**, use `wrangler.toml`:
+### Cloudflare Workers (wrangler.toml)
 
 ```toml
 [vars]
@@ -231,184 +217,91 @@ CF_ACCESS_TEAM_DOMAIN = "https://yourteam.cloudflareaccess.com"
 CF_ACCESS_AUD = "your-audience-tag"
 ```
 
-Or with Wrangler secrets:
+Or use secrets for the audience tag:
 
 ```bash
 wrangler secret put CF_ACCESS_AUD
 ```
 
-### Common Options
-
-All framework adapters support these options:
+### Options Reference
 
 ```typescript
 interface CloudflareAccessAuthOptions {
   /** Cloudflare Access configuration */
   accessConfig: CloudflareAccessConfig;
 
-  /** Optional email allowlist */
+  /** Restrict access to specific emails */
   allowedEmails?: string[];
 
-  /** Custom unauthorized handler */
-  onUnauthorized?: (reason: string) => Response | void | Promise<void>;
-
-  /** Custom forbidden handler */
-  onForbidden?: (email: string) => Response | void | Promise<void>;
-
-  /** Paths to exclude from authentication */
+  /** Skip auth for these paths */
   excludePaths?: string[];
 
-  /** Skip JWT validation in development (localhost requests) */
+  /** Skip JWT validation in development */
   skipInDev?: boolean;
 
-  /** Environment indicator */
-  environment?: string;
+  /** Custom error handlers */
+  onUnauthorized?: (reason: string) => Response | void;
+  onForbidden?: (email: string) => Response | void;
 }
 ```
 
-## User Information
+---
 
-After successful authentication, user information is available:
+## 🎨 User Data
+
+After authentication, user information is attached to requests:
 
 ```typescript
 interface CloudflareAccessUser {
-  email: string;
-  userId?: string;
-  country?: string;
+  email: string; // User's email (e.g., "user@example.com")
+  userId?: string; // Unique identifier
+  country?: string; // Country code (e.g., "US")
 }
 ```
 
-## Rich Error Handling
+---
 
-The library provides rich, actionable errors with detailed context:
+## 🚨 Error Handling
 
-### Error Classes
+Rich, actionable errors with context:
 
 ```typescript
 import {
-  CloudflareAccessError,
-  AuthRequiredError,
-  InvalidTokenError,
-  AccessDeniedError,
-  ConfigurationError,
-  // Type guards
   isAuthRequiredError,
   isInvalidTokenError,
   isAccessDeniedError,
 } from "cloudflare-access/core";
 
-// All errors extend CloudflareAccessError
 try {
   await validateCloudflareAccessToken(token, options, url);
 } catch (error) {
   if (isAuthRequiredError(error)) {
-    console.log("Auth required:", error.message);
-    console.log("Fix:", error.context?.fix);
-  }
-
-  if (isInvalidTokenError(error)) {
-    console.log("Invalid token:", error.reason);
-    console.log("Token info:", error.context?.tokenInfo);
+    // { message: "Authentication required", context: { fix: "Sign in via Cloudflare Access" } }
+    return new Response(error.message, { status: 401 });
   }
 
   if (isAccessDeniedError(error)) {
-    console.log("Access denied for:", error.email);
+    // { message: "Access denied", email: "user@example.com" }
+    return new Response(`Access denied for ${error.email}`, { status: 403 });
   }
-
-  // All errors are serializable
-  console.log("Full error:", error.toJSON());
 }
 ```
 
 ### Error Codes
 
-```typescript
-import { CloudflareAccessErrorCode } from "cloudflare-access/core";
+| Code                  | Description                                      |
+| --------------------- | ------------------------------------------------ |
+| `AUTH_REQUIRED`       | Missing authentication token                     |
+| `INVALID_TOKEN`       | Token validation failed (expired, bad signature) |
+| `ACCESS_DENIED`       | Email not in allowlist                           |
+| `CONFIGURATION_ERROR` | Missing or invalid configuration                 |
 
-// Available error codes:
-// - AUTH_REQUIRED: Missing or invalid authentication token
-// - INVALID_TOKEN: Token validation failed (expired, wrong signature, etc.)
-// - ACCESS_DENIED: User email not in allowlist
-// - INVALID_TEAM_DOMAIN: Invalid team domain configuration
-// - MISSING_AUDIENCE_TAG: Missing audience tag
-// - MISSING_CONFIG: Missing environment configuration
-```
+---
 
-### Effect-TS Error Handling
+## 📚 Package Structure
 
 ```typescript
-import { Effect, Either } from "effect";
-import {
-  authenticateRequest,
-  AuthRequiredError,
-  InvalidTokenError,
-  AccessDeniedError,
-} from "cloudflare-access/effect";
-import { HttpServerRequest } from "@effect/platform";
-
-const request: HttpServerRequest.HttpServerRequest = {
-  url: "https://example.com/api/protected",
-  headers: { "cf-access-jwt-assertion": "token" },
-  method: "GET",
-};
-
-const program = Effect.gen(function* () {
-  const result = yield* Effect.either(
-    authenticateRequest(request, {
-      accessConfig: {
-        teamDomain: "https://yourteam.cloudflareaccess.com",
-        audTag: "your-audience-tag",
-      },
-    }),
-  );
-
-  return Either.match(result, {
-    onLeft: (error) => {
-      if (error instanceof AuthRequiredError) {
-        console.log("Auth required:", error.message);
-        return null;
-      }
-      if (error instanceof AccessDeniedError) {
-        console.log("Access denied for:", error.email);
-        return null;
-      }
-      throw error;
-    },
-    onRight: (user) => user,
-  });
-});
-```
-
-## Using the Core Module Directly
-
-If you need lower-level access to the authentication logic:
-
-```typescript
-import {
-  validateCloudflareAccessToken,
-  getCloudflareAccessConfigFromEnv,
-  type CloudflareAccessConfig,
-} from "cloudflare-access/core";
-
-const result = await validateCloudflareAccessToken(
-  token,
-  { accessConfig: { teamDomain, audTag } },
-  requestUrl,
-);
-
-if (result.success) {
-  console.log("User:", result.user);
-} else {
-  console.log("Auth failed:", result.error);
-}
-```
-
-## Package Imports
-
-The package uses subpath exports for each framework:
-
-```typescript
-// Core authentication logic
+// Core JWT validation
 import { validateCloudflareAccessToken } from "cloudflare-access/core";
 
 // Framework adapters
@@ -417,36 +310,97 @@ import { cloudflareAccessAuth } from "cloudflare-access/express";
 import { cloudflareAccessPlugin } from "cloudflare-access/fastify";
 import { CloudflareAccessGuard } from "cloudflare-access/nestjs";
 import { authenticateRequest } from "cloudflare-access/effect";
-
-// Hono exports (from root)
-import {
-  createCloudflareAccessAuth,
-  getCloudflareAccessConfigFromBindings,
-} from "cloudflare-access";
 ```
 
-## Examples
+---
 
-See the `/examples` directory for detailed examples:
+## 🔧 Advanced Usage
 
-- `examples/hono/` - Hono framework examples
-- `examples/express/` - Express framework examples
-- `examples/fastify/` - Fastify framework examples
-- `examples/nestjs/` - NestJS framework examples
-- `examples/effect/` - Effect-TS framework examples
+### Email Allowlist
 
-## Testing
+```typescript
+app.use(
+  createCloudflareAccessAuth({
+    accessConfig: { teamDomain, audTag },
+    allowedEmails: ["admin@company.com", "dev@company.com"],
+    onForbidden: (email) => {
+      return new Response(`Access denied for ${email}`, { status: 403 });
+    },
+  }),
+);
+```
 
-The library includes comprehensive test coverage for all adapters:
+### Skip Specific Paths
+
+```typescript
+app.use(
+  createCloudflareAccessAuth({
+    accessConfig: { teamDomain, audTag },
+    excludePaths: ["/health", "/api/public"],
+  }),
+);
+```
+
+### Development Mode
+
+```typescript
+app.use(
+  createCloudflareAccessAuth({
+    accessConfig: { teamDomain, audTag },
+    skipInDev: true, // Skip JWT validation on localhost
+    environment: process.env.ENVIRONMENT,
+  }),
+);
+```
+
+---
+
+## 📖 Examples
+
+Check out the `/examples` directory for complete working examples:
+
+- `examples/hono/` - Cloudflare Workers, Bun, Node.js
+- `examples/express/` - Traditional Express server
+- `examples/fastify/` - Fastify with plugins
+- `examples/nestjs/` - NestJS with guards
+- `examples/effect/` - Functional Effect-TS patterns
+
+---
+
+## 🧪 Testing
 
 ```bash
 # Run all tests
 bun test
 
-# Run with coverage
+# With coverage
 bun test --coverage
 ```
 
-## License
+---
 
-MIT
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+MIT © [jbt95](https://github.com/jbt95)
+
+---
+
+<div align="center">
+
+**[📦 npm](https://www.npmjs.com/package/cloudflare-access) · [🐙 GitHub](https://github.com/jbt95/cloudflare-access)**
+
+Built with ❤️ for the Cloudflare ecosystem
+
+</div>
