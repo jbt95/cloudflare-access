@@ -11,7 +11,7 @@ app.register(cloudflareAccessPlugin, {
   },
 });
 
-app.get("/protected", async (request, reply) => {
+app.get("/protected", async (request, _reply) => {
   return {
     message: `Hello ${request.user?.email}`,
     userId: request.user?.userId,

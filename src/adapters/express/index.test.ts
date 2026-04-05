@@ -1,10 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import type { Request, Response } from "express";
-import {
-  cloudflareAccessAuth,
-  __clearJwksCache,
-  type CloudflareAccessConfig,
-} from "cloudflare-access/express";
+import { cloudflareAccessAuth, __clearJwksCache } from "cloudflare-access/express";
 import { SignJWT, generateKeyPair, exportJWK, type JWK, type KeyLike } from "jose";
 
 describe("Express adapter - cloudflareAccessAuth", () => {

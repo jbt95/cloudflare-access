@@ -1,6 +1,6 @@
 import { Controller, Get, Module, Req } from "@nestjs/common";
 import type { Request } from "express";
-import { CloudflareAccessGuard, CloudflareAccess, Public } from "cloudflare-access/nestjs";
+import { CloudflareAccessGuard, Public } from "cloudflare-access/nestjs";
 import { APP_GUARD } from "@nestjs/core";
 
 @Controller("api")

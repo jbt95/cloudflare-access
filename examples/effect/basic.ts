@@ -1,5 +1,13 @@
 import { Effect, Option, Console, pipe } from "effect";
-import { authenticate, getUser, type CloudflareAccessContext } from "cloudflare-access/effect";
+import {
+  authenticate,
+  getUser,
+  type CloudflareAccessContext,
+  isAuthRequiredError,
+  isAccessDeniedError,
+  isInvalidTokenError,
+  CloudflareAccessError,
+} from "cloudflare-access/effect";
 
 // Example: Authenticate a request
 const program = Effect.gen(function* () {
@@ -22,7 +30,7 @@ const program = Effect.gen(function* () {
 });
 
 // Example: Get user or null (safe version)
-const safeProgram = Effect.gen(function* () {
+const _safeProgram = Effect.gen(function* () {
   const context: CloudflareAccessContext = {
     token: Option.some("cf-jwt-token-here"),
     requestUrl: "https://example.com/api",
@@ -47,21 +55,17 @@ const safeProgram = Effect.gen(function* () {
 // Example: Handling errors
 const errorHandlingProgram = pipe(
   program,
-  Effect.catchTag("AuthRequired", (error) =>
+  Effect.catchAll((error: CloudflareAccessError) =>
     Effect.gen(function* () {
-      yield* Console.error(`Auth required: ${error.why}`);
-      return null;
-    }),
-  ),
-  Effect.catchTag("AccessDenied", (error) =>
-    Effect.gen(function* () {
-      yield* Console.error(`Access denied for ${error.email}`);
-      return null;
-    }),
-  ),
-  Effect.catchTag("InvalidToken", (error) =>
-    Effect.gen(function* () {
-      yield* Console.error(`Invalid token: ${error.why}`);
+      if (isAuthRequiredError(error)) {
+        yield* Console.error(`Auth required: ${error.message}`);
+      } else if (isAccessDeniedError(error)) {
+        yield* Console.error(`Access denied for ${error.email}`);
+      } else if (isInvalidTokenError(error)) {
+        yield* Console.error(`Invalid token: ${error.reason}`);
+      } else {
+        yield* Console.error(`Unknown error: ${error.message}`);
+      }
       return null;
     }),
   ),

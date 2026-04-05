@@ -1,12 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import fastify from "fastify";
 import type { FastifyRequest, FastifyReply } from "fastify";
-import {
-  cloudflareAccessPlugin,
-  cloudflareAccessPreHandler,
-  __clearJwksCache,
-  type CloudflareAccessConfig,
-} from "cloudflare-access/fastify";
+import { cloudflareAccessPreHandler, __clearJwksCache } from "cloudflare-access/fastify";
 import { SignJWT, generateKeyPair, exportJWK, type JWK, type KeyLike } from "jose";
 
 describe("Fastify adapter - cloudflareAccessPlugin", () => {
@@ -67,32 +61,39 @@ describe("Fastify adapter - cloudflareAccessPlugin", () => {
       .sign(mockPrivateKey);
   }
 
+  function createMockRequest(token?: string): FastifyRequest {
+    return {
+      url: "/protected",
+      method: "GET",
+      protocol: "http",
+      hostname: "localhost",
+      headers: {
+        "cf-access-jwt-assertion": token,
+      },
+    } as unknown as FastifyRequest;
+  }
+
+  function createMockReply(): FastifyReply {
+    const reply: any = {
+      statusCode: 200,
+      sentBody: null,
+    };
+    reply.code = function (code: number) {
+      this.statusCode = code;
+      return this;
+    };
+    reply.send = function (body: any) {
+      this.sentBody = body;
+      return this;
+    };
+    return reply as FastifyReply;
+  }
+
   describe("cloudflareAccessPreHandler", () => {
     it("should allow access with valid JWT token", async () => {
       const token = await createValidJWT();
-
-      const mockRequest = {
-        url: "/protected",
-        method: "GET",
-        protocol: "http",
-        hostname: "localhost",
-        headers: {
-          "cf-access-jwt-assertion": token,
-        },
-      } as unknown as FastifyRequest;
-
-      let userSet: any = null;
-
-      const mockReply = {
-        statusCode: 200,
-        code(code: number) {
-          this.statusCode = code;
-          return this;
-        },
-        send(body: any) {
-          return this;
-        },
-      } as unknown as FastifyReply;
+      const mockRequest = createMockRequest(token);
+      const mockReply = createMockReply();
 
       const preHandler = cloudflareAccessPreHandler({
         accessConfig: { teamDomain, audTag },
@@ -105,26 +106,8 @@ describe("Fastify adapter - cloudflareAccessPlugin", () => {
     });
 
     it("should reject request without JWT token", async () => {
-      const mockRequest = {
-        url: "/protected",
-        method: "GET",
-        protocol: "http",
-        hostname: "localhost",
-        headers: {},
-      } as unknown as FastifyRequest;
-
-      const mockReply = {
-        statusCode: 200,
-        sentBody: null,
-        code(code: number) {
-          this.statusCode = code;
-          return this;
-        },
-        send(body: any) {
-          this.sentBody = body;
-          return this;
-        },
-      } as unknown as FastifyReply;
+      const mockRequest = createMockRequest(undefined);
+      const mockReply = createMockReply();
 
       const preHandler = cloudflareAccessPreHandler({
         accessConfig: { teamDomain, audTag },
@@ -137,28 +120,8 @@ describe("Fastify adapter - cloudflareAccessPlugin", () => {
     });
 
     it("should reject request with invalid JWT token", async () => {
-      const mockRequest = {
-        url: "/protected",
-        method: "GET",
-        protocol: "http",
-        hostname: "localhost",
-        headers: {
-          "cf-access-jwt-assertion": "invalid-token",
-        },
-      } as unknown as FastifyRequest;
-
-      const mockReply = {
-        statusCode: 200,
-        sentBody: null,
-        code(code: number) {
-          this.statusCode = code;
-          return this;
-        },
-        send(body: any) {
-          this.sentBody = body;
-          return this;
-        },
-      } as unknown as FastifyReply;
+      const mockRequest = createMockRequest("invalid-token");
+      const mockReply = createMockReply();
 
       const preHandler = cloudflareAccessPreHandler({
         accessConfig: { teamDomain, audTag },
@@ -174,27 +137,8 @@ describe("Fastify adapter - cloudflareAccessPlugin", () => {
   describe("email allowlist", () => {
     it("should allow access for email in allowlist", async () => {
       const token = await createValidJWT({ email: "admin@example.com" });
-
-      const mockRequest = {
-        url: "/protected",
-        method: "GET",
-        protocol: "http",
-        hostname: "localhost",
-        headers: {
-          "cf-access-jwt-assertion": token,
-        },
-      } as unknown as FastifyRequest;
-
-      const mockReply = {
-        statusCode: 200,
-        code(code: number) {
-          this.statusCode = code;
-          return this;
-        },
-        send(body: any) {
-          return this;
-        },
-      } as unknown as FastifyReply;
+      const mockRequest = createMockRequest(token);
+      const mockReply = createMockReply();
 
       const preHandler = cloudflareAccessPreHandler({
         accessConfig: { teamDomain, audTag },
@@ -208,29 +152,8 @@ describe("Fastify adapter - cloudflareAccessPlugin", () => {
 
     it("should reject access for email not in allowlist", async () => {
       const token = await createValidJWT({ email: "test@example.com" });
-
-      const mockRequest = {
-        url: "/protected",
-        method: "GET",
-        protocol: "http",
-        hostname: "localhost",
-        headers: {
-          "cf-access-jwt-assertion": token,
-        },
-      } as unknown as FastifyRequest;
-
-      const mockReply = {
-        statusCode: 200,
-        sentBody: null,
-        code(code: number) {
-          this.statusCode = code;
-          return this;
-        },
-        send(body: any) {
-          this.sentBody = body;
-          return this;
-        },
-      } as unknown as FastifyReply;
+      const mockRequest = createMockRequest(token);
+      const mockReply = createMockReply();
 
       const preHandler = cloudflareAccessPreHandler({
         accessConfig: { teamDomain, audTag },
@@ -254,25 +177,13 @@ describe("Fastify adapter - cloudflareAccessPlugin", () => {
         headers: {},
       } as unknown as FastifyRequest;
 
-      const mockReply = {
-        statusCode: 200,
-        code(code: number) {
-          this.statusCode = code;
-          return this;
-        },
-        send(body: any) {
-          return this;
-        },
-      } as unknown as FastifyReply;
-
-      let nextCalled = false;
+      const mockReply = createMockReply();
 
       const preHandler = cloudflareAccessPreHandler({
         accessConfig: { teamDomain, audTag },
         excludePaths: ["/health", "/public"],
       });
 
-      // When excluded, preHandler should return without calling reply methods
       await preHandler.call({ user: undefined }, mockRequest, mockReply);
 
       // Status should still be 200 (unchanged) because auth was skipped
@@ -290,16 +201,7 @@ describe("Fastify adapter - cloudflareAccessPlugin", () => {
         headers: {},
       } as unknown as FastifyRequest;
 
-      const mockReply = {
-        statusCode: 200,
-        code(code: number) {
-          this.statusCode = code;
-          return this;
-        },
-        send(body: any) {
-          return this;
-        },
-      } as unknown as FastifyReply;
+      const mockReply = createMockReply();
 
       const preHandler = cloudflareAccessPreHandler({
         accessConfig: { teamDomain, audTag },
@@ -314,26 +216,8 @@ describe("Fastify adapter - cloudflareAccessPlugin", () => {
 
   describe("custom handlers", () => {
     it("should use custom unauthorized handler", async () => {
-      const mockRequest = {
-        url: "/protected",
-        method: "GET",
-        protocol: "http",
-        hostname: "localhost",
-        headers: {},
-      } as unknown as FastifyRequest;
-
-      const mockReply = {
-        statusCode: 200,
-        sentBody: null,
-        code(code: number) {
-          this.statusCode = code;
-          return this;
-        },
-        send(body: any) {
-          this.sentBody = body;
-          return this;
-        },
-      } as unknown as FastifyReply;
+      const mockRequest = createMockRequest(undefined);
+      const mockReply = createMockReply();
 
       let handlerCalled = false;
       let receivedReason = "";
@@ -356,29 +240,8 @@ describe("Fastify adapter - cloudflareAccessPlugin", () => {
 
     it("should use custom forbidden handler", async () => {
       const token = await createValidJWT({ email: "test@example.com" });
-
-      const mockRequest = {
-        url: "/protected",
-        method: "GET",
-        protocol: "http",
-        hostname: "localhost",
-        headers: {
-          "cf-access-jwt-assertion": token,
-        },
-      } as unknown as FastifyRequest;
-
-      const mockReply = {
-        statusCode: 200,
-        sentBody: null,
-        code(code: number) {
-          this.statusCode = code;
-          return this;
-        },
-        send(body: any) {
-          this.sentBody = body;
-          return this;
-        },
-      } as unknown as FastifyReply;
+      const mockRequest = createMockRequest(token);
+      const mockReply = createMockReply();
 
       let handlerCalled = false;
       let receivedEmail = "";

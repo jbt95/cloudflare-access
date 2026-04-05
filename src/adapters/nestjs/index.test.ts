@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { CloudflareAccessGuard, Public, IS_PUBLIC_KEY } from "cloudflare-access/nestjs";
+import { CloudflareAccessGuard, IS_PUBLIC_KEY } from "cloudflare-access/nestjs";
 import { __clearJwksCache } from "cloudflare-access/core";
 import { SignJWT, generateKeyPair, exportJWK, type JWK, type KeyLike } from "jose";
 import type { ExecutionContext } from "@nestjs/common";

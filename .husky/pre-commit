@@ -1,0 +1,23 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "Running pre-commit checks..."
+
+# Format check
+echo "Checking formatting..."
+bun run format:fix || exit 1
+
+# Lint
+echo "Running linter..."
+bun run lint || exit 1
+
+# Type check
+echo "Running type check..."
+bun run typecheck || exit 1
+
+# Tests
+echo "Running tests..."
+bun test || exit 1
+
+echo "All checks passed!"
+

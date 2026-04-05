@@ -126,7 +126,7 @@ export class CloudflareAccessGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest<Request>();
     const method = request.method;
-    const path = request.url;
+    const _path = request.url;
 
     // Skip OPTIONS requests
     if (method === "OPTIONS") {

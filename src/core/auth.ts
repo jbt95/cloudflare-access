@@ -63,7 +63,7 @@ export const CloudflareAccessErrorCode = {
 } as const;
 
 export type CloudflareAccessErrorCode =
-  typeof CloudflareAccessErrorCode[keyof typeof CloudflareAccessErrorCode];
+  (typeof CloudflareAccessErrorCode)[keyof typeof CloudflareAccessErrorCode];
 
 /**
  * Base error class for Cloudflare Access authentication errors
@@ -102,9 +102,10 @@ export class CloudflareAccessError extends Error {
       context: this.context,
       requestUrl: this.requestUrl,
       timestamp: this.timestamp,
-      cause: this.cause instanceof Error
-        ? { message: this.cause.message, name: this.cause.name }
-        : undefined,
+      cause:
+        this.cause instanceof Error
+          ? { message: this.cause.message, name: this.cause.name }
+          : undefined,
     };
   }
 }
@@ -113,10 +114,7 @@ export class CloudflareAccessError extends Error {
  * Error thrown when authentication is required but token is missing
  */
 export class AuthRequiredError extends CloudflareAccessError {
-  constructor(options?: {
-    requestUrl?: string;
-    context?: Record<string, unknown>;
-  }) {
+  constructor(options?: { requestUrl?: string; context?: Record<string, unknown> }) {
     super(
       CloudflareAccessErrorCode.AUTH_REQUIRED,
       "Authentication required via Cloudflare Access",
@@ -139,31 +137,30 @@ export class AuthRequiredError extends CloudflareAccessError {
 export class InvalidTokenError extends CloudflareAccessError {
   readonly reason: string;
 
-  constructor(reason: string, options?: {
-    cause?: Error;
-    requestUrl?: string;
-    tokenInfo?: { issuer?: string; audience?: string; exp?: number };
-  }) {
+  constructor(
+    reason: string,
+    options?: {
+      cause?: Error;
+      requestUrl?: string;
+      tokenInfo?: { issuer?: string; audience?: string; exp?: number };
+    },
+  ) {
     const message = `Invalid authentication token: ${reason}`;
-    super(
-      CloudflareAccessErrorCode.INVALID_TOKEN,
-      message,
-      {
-        cause: options?.cause,
-        requestUrl: options?.requestUrl,
-        context: {
-          reason,
-          tokenInfo: options?.tokenInfo,
-          fix: "Please sign in again via Cloudflare Access to obtain a new token",
-          commonCauses: [
-            "Token has expired",
-            "Token was issued by wrong team domain",
-            "Token audience doesn't match application",
-            "Token signature is invalid",
-          ],
-        },
+    super(CloudflareAccessErrorCode.INVALID_TOKEN, message, {
+      cause: options?.cause,
+      requestUrl: options?.requestUrl,
+      context: {
+        reason,
+        tokenInfo: options?.tokenInfo,
+        fix: "Please sign in again via Cloudflare Access to obtain a new token",
+        commonCauses: [
+          "Token has expired",
+          "Token was issued by wrong team domain",
+          "Token audience doesn't match application",
+          "Token signature is invalid",
+        ],
       },
-    );
+    });
     this.name = "InvalidTokenError";
     this.reason = reason;
   }
@@ -175,24 +172,23 @@ export class InvalidTokenError extends CloudflareAccessError {
 export class AccessDeniedError extends CloudflareAccessError {
   readonly email: string;
 
-  constructor(email: string, options?: {
-    requestUrl?: string;
-    allowedEmails?: string[];
-  }) {
+  constructor(
+    email: string,
+    options?: {
+      requestUrl?: string;
+      allowedEmails?: string[];
+    },
+  ) {
     const message = `Access denied for ${email}`;
-    super(
-      CloudflareAccessErrorCode.ACCESS_DENIED,
-      message,
-      {
-        ...options,
-        context: {
-          email,
-          allowedEmails: options?.allowedEmails,
-          fix: "Contact an administrator if you need access to this resource",
-          note: "Your email must be in the allowedEmails list or the Cloudflare Access policy must allow your email",
-        },
+    super(CloudflareAccessErrorCode.ACCESS_DENIED, message, {
+      ...options,
+      context: {
+        email,
+        allowedEmails: options?.allowedEmails,
+        fix: "Contact an administrator if you need access to this resource",
+        note: "Your email must be in the allowedEmails list or the Cloudflare Access policy must allow your email",
       },
-    );
+    });
     this.name = "AccessDeniedError";
     this.email = email;
   }
@@ -205,10 +201,7 @@ export class ConfigurationError extends CloudflareAccessError {
   readonly configKey: string;
 
   constructor(
-    code: Exclude<
-      CloudflareAccessErrorCode,
-      "AUTH_REQUIRED" | "INVALID_TOKEN" | "ACCESS_DENIED"
-    >,
+    code: Exclude<CloudflareAccessErrorCode, "AUTH_REQUIRED" | "INVALID_TOKEN" | "ACCESS_DENIED">,
     configKey: string,
     message: string,
     options?: {
@@ -216,18 +209,14 @@ export class ConfigurationError extends CloudflareAccessError {
       expectedFormat?: string;
     },
   ) {
-    super(
-      code,
-      message,
-      {
-        ...options,
-        context: {
-          configKey,
-          expectedFormat: options?.expectedFormat,
-          fix: `Check your Cloudflare Access configuration for ${configKey}`,
-        },
+    super(code, message, {
+      ...options,
+      context: {
+        configKey,
+        expectedFormat: options?.expectedFormat,
+        fix: `Check your Cloudflare Access configuration for ${configKey}`,
       },
-    );
+    });
     this.name = "ConfigurationError";
     this.configKey = configKey;
   }
@@ -393,10 +382,7 @@ export function isConfigurationError(error: unknown): error is ConfigurationErro
 /**
  * Convert any error to a rich AuthError
  */
-export function toAuthError(
-  error: unknown,
-  requestUrl?: string,
-): AuthError {
+export function toAuthError(error: unknown, requestUrl?: string): AuthError {
   if (isCloudflareAccessError(error)) {
     return {
       code: error.code,
@@ -471,17 +457,14 @@ export async function validateCloudflareAccessToken(
     const email = accessPayload.email;
 
     if (!email) {
-      throw new InvalidTokenError(
-        "Email not found in validated Cloudflare Access token",
-        {
-          requestUrl,
-          tokenInfo: {
-            issuer: payload.iss,
-            audience: Array.isArray(payload.aud) ? payload.aud[0] : payload.aud,
-            exp: payload.exp,
-          },
+      throw new InvalidTokenError("Email not found in validated Cloudflare Access token", {
+        requestUrl,
+        tokenInfo: {
+          issuer: payload.iss,
+          audience: Array.isArray(payload.aud) ? payload.aud[0] : payload.aud,
+          exp: payload.exp,
         },
-      );
+      });
     }
 
     // Check email allowlist if configured
@@ -562,7 +545,8 @@ export function getCloudflareAccessConfigFromEnv(
       missing,
       `Missing Cloudflare Access bindings: ${missing}`,
       {
-        expectedFormat: "CF_ACCESS_TEAM_DOMAIN=https://<team>.cloudflareaccess.com, CF_ACCESS_AUD=<audience-tag>",
+        expectedFormat:
+          "CF_ACCESS_TEAM_DOMAIN=https://<team>.cloudflareaccess.com, CF_ACCESS_AUD=<audience-tag>",
       },
     );
   }

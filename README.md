@@ -187,7 +187,7 @@ const program = Effect.gen(function* () {
     console.log(`Authenticated user: ${result.user.email}`);
     return result.user;
   }
-  
+
   console.log("Authentication skipped (dev mode)");
   return null;
 });
@@ -348,7 +348,7 @@ const program = Effect.gen(function* () {
         console.log("Access denied for:", error.email);
       }
       return Effect.fail(error);
-    })
+    }),
   );
 
   return result;
@@ -439,6 +439,7 @@ bun test --coverage
 ```
 
 Test coverage includes:
+
 - Token validation (valid, invalid, expired tokens)
 - Email allowlist filtering
 - Path exclusions

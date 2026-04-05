@@ -4,12 +4,10 @@ import {
   authenticate,
   authenticateEither,
   getUser,
-  CloudflareAccessError,
   AuthRequiredError,
   InvalidTokenError,
   AccessDeniedError,
   type CloudflareAccessContext,
-  type AuthenticationSuccess,
 } from "cloudflare-access/effect";
 import { __clearJwksCache } from "cloudflare-access/core";
 import { SignJWT, generateKeyPair, exportJWK, type JWK, type KeyLike } from "jose";

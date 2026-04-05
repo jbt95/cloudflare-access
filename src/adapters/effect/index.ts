@@ -6,7 +6,6 @@ import {
   validateCloudflareAccessToken,
   getCloudflareAccessConfigFromEnv as _getCloudflareAccessConfigFromEnv,
   __clearJwksCache,
-  type AuthResult,
   // Error classes and utilities
   CloudflareAccessError,
   AuthRequiredError,
@@ -88,32 +87,6 @@ export interface AuthenticationSuccess {
 }
 
 /**
- * Convert a CloudflareAccessError to an Effect failure
- */
-function errorToEffectFailure(error: unknown): Effect.Effect<never, CloudflareAccessError, never> {
-  if (isCloudflareAccessError(error)) {
-    return Effect.fail(error);
-  }
-
-  if (error instanceof Error) {
-    return Effect.fail(
-      new CloudflareAccessError(
-        CloudflareAccessErrorCode.INVALID_TOKEN,
-        error.message,
-        { cause: error },
-      ),
-    );
-  }
-
-  return Effect.fail(
-    new CloudflareAccessError(
-      CloudflareAccessErrorCode.INVALID_TOKEN,
-      "Unknown authentication error",
-    ),
-  );
-}
-
-/**
  * Authenticate a request using Cloudflare Access.
  * Returns an Effect that can fail with CloudflareAccessError or succeed with AuthenticationSuccess.
  *
@@ -157,12 +130,16 @@ export const authenticate = (
     try: async () => {
       const token = Option.getOrUndefined(context.token);
 
-      const result = await validateCloudflareAccessToken(token, {
-        accessConfig: options.accessConfig,
-        allowedEmails: options.allowedEmails,
-        skipInDev: options.skipInDev,
-        environment: options.environment,
-      }, context.requestUrl);
+      const result = await validateCloudflareAccessToken(
+        token,
+        {
+          accessConfig: options.accessConfig,
+          allowedEmails: options.allowedEmails,
+          skipInDev: options.skipInDev,
+          environment: options.environment,
+        },
+        context.requestUrl,
+      );
 
       if (!result.success) {
         // Convert AuthResult error to rich error
@@ -177,13 +154,10 @@ export const authenticate = (
               context: errorContext,
             });
           case CloudflareAccessErrorCode.ACCESS_DENIED:
-            throw new AccessDeniedError(
-              result.user?.email ?? "unknown",
-              {
-                requestUrl: context.requestUrl,
-                allowedEmails: options.allowedEmails,
-              },
-            );
+            throw new AccessDeniedError(result.user?.email ?? "unknown", {
+              requestUrl: context.requestUrl,
+              allowedEmails: options.allowedEmails,
+            });
           case CloudflareAccessErrorCode.INVALID_TOKEN:
             throw new InvalidTokenError(errorMessage, {
               requestUrl: context.requestUrl,
@@ -209,11 +183,9 @@ export const authenticate = (
       }
 
       if (error instanceof Error) {
-        return new CloudflareAccessError(
-          CloudflareAccessErrorCode.INVALID_TOKEN,
-          error.message,
-          { cause: error },
-        );
+        return new CloudflareAccessError(CloudflareAccessErrorCode.INVALID_TOKEN, error.message, {
+          cause: error,
+        });
       }
 
       return new CloudflareAccessError(
@@ -283,7 +255,7 @@ export const getUser = (
   return pipe(
     authenticate(context, options),
     Effect.map((success: AuthenticationSuccess) =>
-      success.user ? Option.some(success.user) : Option.none<CloudflareAccessUser>()
+      success.user ? Option.some(success.user) : Option.none<CloudflareAccessUser>(),
     ),
     Effect.catchAll(() => Effect.succeed(Option.none<CloudflareAccessUser>())),
   );
