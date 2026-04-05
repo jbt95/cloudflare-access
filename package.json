@@ -118,7 +118,7 @@
     "format:fix": "oxfmt -c oxfmtrc.json . --write",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "bun run build && bun test",
-    "prepare": "husky"
+    "prepare": "bun husky"
   },
   "dependencies": {
     "jose": "^5.9.6"
