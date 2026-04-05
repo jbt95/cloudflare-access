@@ -1,0 +1,18 @@
+{
+  "$schema": "https://oxc.rs/schema/oxfmt/configuration_schema.json",
+  "ignorePatterns": ["**/node_modules/**", "**/dist/**"],
+  "plugins": {
+    "prettier": {
+      "enabled": true,
+      "indentStyle": "space",
+      "indentWidth": 2,
+      "lineWidth": 100,
+      "semicolons": true,
+      "trailingComma": "es5",
+      "quoteStyle": "double",
+      "bracketSpacing": true,
+      "arrowParens": "always",
+      "endOfLine": "lf"
+    }
+  }
+}

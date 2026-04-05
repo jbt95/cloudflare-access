@@ -1,0 +1,166 @@
+{
+  "name": "cloudflare-access",
+  "version": "1.0.0",
+  "description": "Multi-framework authentication for Cloudflare Access with JWT validation - supports Hono, Express, Fastify, NestJS, and Effect-TS",
+  "keywords": [
+    "authentication",
+    "cloudflare",
+    "cloudflare-access",
+    "effect",
+    "effect-ts",
+    "express",
+    "fastify",
+    "hono",
+    "jwt",
+    "middleware",
+    "nestjs",
+    "workers"
+  ],
+  "homepage": "https://github.com/yourusername/cloudflare-access#readme",
+  "bugs": {
+    "url": "https://github.com/yourusername/cloudflare-access/issues"
+  },
+  "license": "MIT",
+  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/cloudflare-access.git"
+  },
+  "files": [
+    "dist",
+    "examples",
+    "README.md",
+    "LICENSE"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    },
+    "./hono": {
+      "import": {
+        "types": "./dist/adapters/hono/index.d.mts",
+        "default": "./dist/adapters/hono/index.mjs"
+      },
+      "require": {
+        "types": "./dist/adapters/hono/index.d.ts",
+        "default": "./dist/adapters/hono/index.js"
+      }
+    },
+    "./express": {
+      "import": {
+        "types": "./dist/adapters/express/index.d.mts",
+        "default": "./dist/adapters/express/index.mjs"
+      },
+      "require": {
+        "types": "./dist/adapters/express/index.d.ts",
+        "default": "./dist/adapters/express/index.js"
+      }
+    },
+    "./fastify": {
+      "import": {
+        "types": "./dist/adapters/fastify/index.d.mts",
+        "default": "./dist/adapters/fastify/index.mjs"
+      },
+      "require": {
+        "types": "./dist/adapters/fastify/index.d.ts",
+        "default": "./dist/adapters/fastify/index.js"
+      }
+    },
+    "./nestjs": {
+      "import": {
+        "types": "./dist/adapters/nestjs/index.d.mts",
+        "default": "./dist/adapters/nestjs/index.mjs"
+      },
+      "require": {
+        "types": "./dist/adapters/nestjs/index.d.ts",
+        "default": "./dist/adapters/nestjs/index.js"
+      }
+    },
+    "./effect": {
+      "import": {
+        "types": "./dist/adapters/effect/index.d.mts",
+        "default": "./dist/adapters/effect/index.mjs"
+      },
+      "require": {
+        "types": "./dist/adapters/effect/index.d.ts",
+        "default": "./dist/adapters/effect/index.js"
+      }
+    },
+    "./core": {
+      "import": {
+        "types": "./dist/core/auth.d.mts",
+        "default": "./dist/core/auth.mjs"
+      },
+      "require": {
+        "types": "./dist/core/auth.d.ts",
+        "default": "./dist/core/auth.js"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsup --config tsup.config.ts",
+    "test": "bun test",
+    "test:coverage": "bun test --coverage",
+    "lint": "oxlint -c oxlintrc.json .",
+    "lint:fix": "oxlint -c oxlintrc.json . --fix",
+    "format": "oxfmt -c oxfmtrc.json .",
+    "format:fix": "oxfmt -c oxfmtrc.json . --write",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "bun run build && bun test"
+  },
+  "dependencies": {
+    "jose": "^5.9.6"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260404.1",
+    "@nestjs/common": "^11.1.18",
+    "@nestjs/core": "^11.1.18",
+    "@types/bun": "latest",
+    "@types/express": "^5.0.6",
+    "effect": "^3.21.0",
+    "fastify": "^5.8.4",
+    "hono": "^4.6.14",
+    "oxfmt": "^0.43.0",
+    "oxlint": "^0.16.0",
+    "reflect-metadata": "^0.2.2",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2"
+  },
+  "peerDependencies": {
+    "hono": "^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "express": {
+      "optional": true
+    },
+    "@types/express": {
+      "optional": true
+    },
+    "fastify": {
+      "optional": true
+    },
+    "@nestjs/common": {
+      "optional": true
+    },
+    "effect": {
+      "optional": true
+    },
+    "hono": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "bun": ">=1.0.0"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "lib": ["ES2022"],
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": ".",
+    "resolveJsonModule": true,
+    "types": ["bun-types", "@cloudflare/workers-types", "reflect-metadata"],
+    "baseUrl": ".",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "paths": {
+      "cloudflare-access": ["./src/index.ts"],
+      "cloudflare-access/hono": ["./src/adapters/hono/index.ts"],
+      "cloudflare-access/express": ["./src/adapters/express/index.ts"],
+      "cloudflare-access/fastify": ["./src/adapters/fastify/index.ts"],
+      "cloudflare-access/nestjs": ["./src/adapters/nestjs/index.ts"],
+      "cloudflare-access/effect": ["./src/adapters/effect/index.ts"],
+      "cloudflare-access/core": ["./src/core/auth.ts"]
+    }
+  },
+  "include": ["src/**/*", "examples/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
